@@ -1,4 +1,5 @@
 import { handleUpload } from '@vercel/blob/client';
+import { token } from '@/lib/store';
 import { guard } from '@/lib/auth';
 import { fail, safe } from '@/lib/api';
 import { MAX_VIDEO, MAX_PDF, MAX_PROCESSED_IMAGE } from '@/lib/limits';
@@ -19,7 +20,7 @@ export async function POST(request) {
     const body = await request.json().catch(() => null);
     if (!body) return fail('Bad request.');
     const json = await handleUpload({
-      body, request,
+      body, request, token: token(),
       onBeforeGenerateToken: async (pathname) => {
         const rule = RULES.find((r) => r.re.test(pathname));
         if (!rule) throw new Error('This kind of file is not allowed.');
