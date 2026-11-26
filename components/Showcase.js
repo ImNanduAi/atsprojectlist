@@ -9,7 +9,7 @@ import { counts } from '@/lib/format';
 
 const thumb = thumbUrl;
 const big = mediaUrl;
-const year = (p) => new Date(p.created_at).getFullYear();
+const year = (p) => p.delivered || new Date(p.created_at).getFullYear();
 const pad = (n) => String(n).padStart(2, '0');
 const excerpt = (t) => (t.length > 190 ? t.slice(0, 187).trimEnd() + '…' : t);
 const rectOf = (el) => {
