@@ -1,7 +1,7 @@
 import { head } from '@vercel/blob';
 import { guard } from '@/lib/auth';
 import { fail, safe } from '@/lib/api';
-import { updateData, isMediaId, removeFiles } from '@/lib/store';
+import { token, updateData, isMediaId, removeFiles } from '@/lib/store';
 
 export const runtime = 'nodejs';
 
@@ -33,8 +33,8 @@ export async function POST(request, { params }) {
     }[kind];
     const m = p.match(re);
     if (!m || !isMediaId(m[1])) return fail('Unexpected file name.');
-    await head(file); // throws when the file is not really there
-    if (kind === 'image') await head(file.replace(/\.(webp|jpg)$/, '_t.$1'));
+    await head(file, { token: token() }); // throws when the file is not really there
+    if (kind === 'image') await head(file.replace(/\.(webp|jpg)$/, '_t.$1'), { token: token() });
 
     const item = {
       id: m[1], kind, file,
