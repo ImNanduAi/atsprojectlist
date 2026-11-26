@@ -22,7 +22,7 @@ async function api(url, method, body) {
   return j;
 }
 
-const blank = { name: '', tagline: '', client: '', category: '', details: '' };
+const blank = { name: '', tagline: '', client: '', category: '', delivered: '', details: '' };
 
 export default function AdminClient({ projects }) {
   const router = useRouter();
@@ -54,7 +54,7 @@ export default function AdminClient({ projects }) {
   function startEdit(p) {
     reset();
     setEditing(p.id);
-    setF({ name: p.name, tagline: p.tagline, client: p.client, category: p.category, details: p.details });
+    setF({ name: p.name, tagline: p.tagline, client: p.client, category: p.category, delivered: p.delivered, details: p.details });
     setFeatures(p.features.map((x) => ({ ...x })));
     setLinks(p.links.map((l) => l.url));
     say('');
@@ -154,6 +154,14 @@ export default function AdminClient({ projects }) {
       .then(() => { if (editing === id) reset(); router.refresh(); say('Project deleted.'); })
       .catch((er) => say(er.message, true));
   }
+  async function move(i, dir) {
+    const ids = projects.map((p) => p.id);
+    const j = i + dir;
+    if (j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    try { await api('/api/projects/order', 'POST', { ids }); router.refresh(); say('Order saved. This is the order visitors see.'); }
+    catch (er) { say(er.message, true); }
+  }
   async function logout() { await fetch('/api/login', { method: 'DELETE' }); router.refresh(); }
 
   return (
@@ -178,6 +186,10 @@ export default function AdminClient({ projects }) {
           <div className="two">
             <div><label htmlFor="f-client">Client</label><input id="f-client" className="field" maxLength={120} autoComplete="off" value={f.client} onChange={set('client')} /></div>
             <div><label htmlFor="f-cat">Category</label><input id="f-cat" className="field" maxLength={80} autoComplete="off" value={f.category} onChange={set('category')} /></div>
+          </div>
+          <div>
+            <label htmlFor="f-delivered">Delivered</label>
+            <input id="f-delivered" className="field" maxLength={40} placeholder="e.g. March 2025 (leave empty to use the date it was added)" autoComplete="off" value={f.delivered} onChange={set('delivered')} />
           </div>
           <div>
             <label htmlFor="f-details">Details</label>
@@ -295,11 +307,12 @@ export default function AdminClient({ projects }) {
 
         <div className="panel">
           <h2>All projects</h2>
+          {projects.length > 1 && <p className="hint">Use ▲ ▼ to arrange the order. The website shows projects in this order.</p>}
           {projects.length === 0 ? (
             <p className="msg">Nothing here yet. Projects you add appear in this list and on the website.</p>
           ) : (
             <div className="manage">
-              {projects.map((p) => (
+              {projects.map((p, i) => (
                 <div className="mrow" key={p.id}>
                   <div className="mthumb">{p.cover ? <img src={thumb(p.cover.file)} alt="" /> : p.name.charAt(0).toUpperCase()}</div>
                   <div className="mtext">
@@ -307,6 +320,8 @@ export default function AdminClient({ projects }) {
                     <div className="mono muted">{new Date(p.created_at).getFullYear()} · {p.images.length} photos · {p.videos.length + p.links.length} videos{p.brochure ? ' · PDF' : ''}</div>
                   </div>
                   <div className="mactions">
+                    <button type="button" className="btn small" onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move ${p.name} up`}>▲</button>
+                    <button type="button" className="btn small" onClick={() => move(i, 1)} disabled={i === projects.length - 1} aria-label={`Move ${p.name} down`}>▼</button>
                     <Link className="btn small" href={`/projects/${p.id}`} target="_blank">View</Link>
                     <button type="button" className="btn small" onClick={() => startEdit(p)}>Edit</button>
                     <button type="button" className={`btn small danger${armed === p.id ? ' armed' : ''}`} onClick={() => deleteProject(p.id)}>{armed === p.id ? 'Confirm delete' : 'Delete'}</button>
