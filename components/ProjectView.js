@@ -202,7 +202,7 @@ export default function ProjectView({ project: p, company, origin, closing, onRe
   const lv = view.leaving && imgs[view.leaving.idx];
   const paras = paragraphs(p.details);
   const words = p.name.split(/\s+/);
-  const year = new Date(p.created_at).getFullYear();
+  const year = p.delivered || new Date(p.created_at).getFullYear();
   const feats = p.features || [];
   const meta = [['Client', p.client], ['Category', p.category], ['Delivered', String(year)], ['Media', counts(p)]].filter(([, v]) => v);
   const pdfName = `${p.name.replace(/[^\w\- ]+/g, '').trim() || 'project'} - brochure.pdf`;
